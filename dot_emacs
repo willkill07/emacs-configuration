@@ -1,0 +1,184 @@
+;; Killian, William K.
+;; 2014 March 14
+;; Customized Emacs Configuration File
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(add-to-list 'load-path "~/.emacs.d/lisp/")
+(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
+
+;; MAC OS X FIXES :)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(set-keyboard-coding-system nil)
+(setq mac-option-key-is-meta nil)
+(setq mac-command-key-is-meta t)
+(setq mac-command-modifier 'meta)
+(setq mac-option-modifier nil)
+
+(if (not (getenv "TERM_PROGRAM"))
+    (setenv "PATH" (shell-command-to-string "source $HOME/.bash_profile && printf $PATH")))
+
+(set-terminal-coding-system 'utf-8)
+(set-keyboard-coding-system 'utf-8)
+(prefer-coding-system 'utf-8)
+
+;; GENERIC OPTIONS -- ANNOYANCES FIXES
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(setq inhibit-splash-screen t)
+(setq require-final-newline t)
+(setq make-backup-files nil)
+
+;; INTERFACE ADJUSTMENTS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(show-paren-mode 1)
+(electric-indent-mode 1)
+(delete-selection-mode 1)
+(show-paren-mode t)
+(menu-bar-mode -1)
+
+;; Modeline
+(setq-default mode-line-format
+  (list
+   '(:eval (if buffer-read-only
+	       (propertize "RO"
+			   'face 'font-lock-type-face
+			   'help-echo "Buffer is read-only")
+	     "--"))
+   '(:eval (if (buffer-modified-p) " "
+	     (if buffer-read-only " " "-")))
+   '(:eval (if (buffer-modified-p)
+	       (propertize "*"
+			   'face 'font-lock-warning-face
+			   'help-echo "Buffer has been modified")
+	     "-"))
+   " "
+   '(:eval (shorten-directory default-directory 30))
+   '(:eval (propertize "%b " 'face 'font-lock-keyword-face
+		       'help-echo (buffer-file-name)))
+   
+   (propertize "(%l,%c)" 'face 'font-lock-type-face)
+   " -- "
+   (propertize "[%p/%I]" 'face 'font-lock-constant-face)
+   " -- "
+   '(:eval (propertize "%m" 'face 'font-lock-string-face
+		       'help-echo buffer-file-coding-system))
+   minor-mode-alist
+   " %-"
+   ))
+
+(defun shorten-directory (dir max-length)
+  "Show up to `max-length' characters of a directory name `dir'."
+  (let ((path (reverse (split-string (abbreviate-file-name dir) "/")))
+        (output ""))
+    (when (and path (equal "" (car path)))
+      (setq path (cdr path)))
+    (while (and path (< (length output) (- max-length 4)))
+      (setq output (concat (car path) "/" output))
+      (setq path (cdr path)))
+    (when path
+      (setq output (concat ".../" output)))
+    output))
+
+;; Graphical Only
+(when (display-graphic-p)  
+  (tooltip-mode -1)
+  (tool-bar-mode -1)
+  (menu-bar-mode 1)
+  (scroll-bar-mode -1)
+  (x-focus-frame nil)
+  (load-theme 'zenburn t))
+
+;; Rainbow Mode
+(add-hook 'prog-mode-hook 'rainbow-mode)
+(add-hook 'html-mode-hook 'rainbow-mode)
+(add-hook 'css-mode-hook 'rainbow-mode)
+(require 'rainbow-delimiters)
+(global-rainbow-delimiters-mode)
+
+;; Linum Mode
+
+(add-hook 'prog-mode-hook (lambda ()
+			    (linum-mode t)))
+(require 'linum-customize)
+
+;; Tabs/Space Annoyances
+(setq c-default-style "stroustrup")
+(add-hook 'c-mode-common-hook
+	  (lambda ()
+	    (setq c-basic-offset 2)
+            (c-toggle-hungry-state -1)
+            (c-toggle-auto-state -1)
+            (setq tab-width 2)
+            (setq indent-tabs-mode nil)))
+
+;; AUTOCOMPLETE
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; NOTE: My autocomplete configuration really likes it when you have a
+;;       `make flags` which prints out the -I -D and -std= flags for the
+;;       compiler to use for autocompletion :)
+;;
+;; You can even have something as simple as:
+;; flags:
+;;         @echo "-std=c++11"
+
+(setq company-tooltip-limit 20
+      company-minimum-prefix-length 1
+      company-echo-delay 0
+      company-begin-commands
+      '(self-insert-command
+	c-electric-lt-gt c-electric-colon
+	completion-separator-self-insert-command)
+      company-idle-delay 0.1
+      company-show-numbers nil)
+
+(defun set-company-clang-arguments ()
+  (setq currdir (file-name-directory buffer-file-name))
+  (setq make-command-str (concat "cd " (file-name-directory buffer-file-name) " &> /dev/null && make flags 2> /dev/null"))
+  (setq args (shell-command-to-string make-command-str))
+  (setq args (concat args " -stdlib=libc++")) ;; this is super important for anything in C++11
+  (setq-local company-clang-arguments (split-string args)))
+
+(add-hook 'after-init-hook 'global-company-mode)
+(add-hook 'c-mode-common-hook 'set-company-clang-arguments)
+
+;; SYNTAX ADJUSTMENTS / NEW LANGUAGES
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(require 'civl-syntax)
+
+;; MY FUNCTIONS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun format-source ()
+  (interactive)
+  (indent-region (point-min) (point-max) nil))
+
+;; MY KEY MAPPINGS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(require 'shell-up-down-fix)
+(require 'wrap-error-fix)
+
+;; C-c Keys
+(global-set-key "\C-cr" 'toggle-read-only)
+(global-set-key "\C-cw" 'whitespace-mode)
+(global-set-key "\C-cg" 'goto-line)
+(global-set-key "\C-cf" 'format-source)
+(global-set-key "\C-cn" 'next-error-wrapped)
+(global-set-key "\C-cp" 'previous-error-wrapped)
+(global-set-key "\C-c[" 'uncomment-region)
+(global-set-key "\C-c]" 'comment-region)
+(global-set-key "\C-cc" 'compile)
+
+;; F Keys
+
+;; CUSTOM SET STUFF
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(custom-set-variables
+ '(custom-safe-themes (quote ("ce2cb247180112788665fb2a7da3c1a0cf5169c36a891241538ff44710438c57" default)))
+ '(safe-local-variable-values (quote ((eval when (fboundp (quote rainbow-mode)) (rainbow-mode 1)))))
+ '(indicate-empty-lines t))

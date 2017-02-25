@@ -93,14 +93,18 @@
   :ensure t
   :defer 2
   :diminish company-mode "C "
-  :config (global-company-mode)
+  :config
+  (setq company-backends (delete 'company-clang company-backends))
+  (global-company-mode)
   :bind ("<backtab>" . company-complete-common))
 
 (use-package flycheck
   :ensure t
   :defer 1
   :diminish flycheck-mode "F "
-  :config (global-flycheck-mode))
+  :config
+  (global-flycheck-mode)
+  (setq-default flycheck-disabled-checkers '(c/c++-clang)))
 
 (use-package irony
   :ensure t

@@ -19,29 +19,34 @@
 (use-package diminish
   :ensure t)
 
-
-;; Interface config
-(diminish 'abbrev-mode)
+;; Startup
 (setq inhibit-startup-screen t)
 (defalias 'yes-or-no-p 'y-or-n-p)
 
-;; Interface
+;; GUI Interface
+(if window-system
+    (progn
+      (menu-bar-mode -1)
+      (tool-bar-mode -1)
+      (scroll-bar-mode -1)))
 
-(menu-bar-mode -1)
-(tool-bar-mode -1)
-(scroll-bar-mode -1)
+;; Modeline
+(diminish 'abbrev-mode)
 (column-number-mode 1)
 (line-number-mode 1)
+
+;; Editor
 (show-paren-mode 1)
 (electric-indent-mode 1)
 (delete-selection-mode 1)
+
+;; Scrolling
 (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
 (setq mouse-wheel-progressive-speed nil)
 (setq mouse-wheel-follow-mouse 't)
 (setq scroll-step 1)
 
 ;; Tab and whitespace hell
-
 (setq-default indent-tabs-mode nil)
 (defun untabify-except-makefiles ()
   "Replace tabs with spaces except in makefiles."
@@ -55,13 +60,13 @@
 (use-package exec-path-from-shell
   :ensure t
   :config
-  (when (memq window-system '(mac ns))
-    (exec-path-from-shell-initialize)))
+  (exec-path-from-shell-initialize))
 
 (use-package smooth-scrolling
   :ensure t
   :config
-  (setq smooth-scroll-margin 8))
+  (setq smooth-scroll-margin 8)
+  (smooth-scrolling-mode))
 
 (use-package powerline
   :ensure t
@@ -200,11 +205,10 @@
   :ensure t)
 
 (use-package llvm-mode
-  :disabled
-  :ensure t
-  :config
-  (use-package autodisass-llvm-bitcode
-    :ensure t))
+  :ensure t)
+
+(use-package autodisass-llvm-bitcode
+  :ensure t)
 
 (use-package mips-mode
   :disabled
@@ -279,3 +283,17 @@
 
 (provide 'init)
 ;;; init.el ends here
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   (quote
+    (company-web rainbow-mode web-mode less-css-mode yaml-mode json-mode markdown-mode autodisass-llvm-bitcode bison-mode clang-format flycheck-irony company-irony-c-headers company-irony irony flycheck company modern-cpp-font-lock cmake-mode gitignore-mode gitconfig-mode git-gutter rainbow-identifiers rainbow-delimiters monokai-theme powerline smooth-scrolling exec-path-from-shell use-package))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )

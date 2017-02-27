@@ -2,6 +2,20 @@
 
 ;;; Commentary:
 
+;; Intelligent C++ autocomplete added to Emacs!
+;;
+;;  - Completion window can be prought up with C-\
+;;
+;;  - Code can be automatically formatted with clang-format (C-f)
+;;    The format guidelines can be changed on a per-project basis.
+;;    See: https://zed0.co.uk/clang-format-configurator/
+;;
+;;  - Warnings/errors/language standard can be changed by specifying a
+;;    .clang_complete file on a per-project or computer basis.
+;;    See: https://github.com/Rip-Rip/clang_complete
+;;
+;; Questions, comments or concerns? Contact Will Killian (willkill07)
+
 
 ;;; Code:
 
@@ -68,17 +82,6 @@
   (setq smooth-scroll-margin 8)
   (smooth-scrolling-mode))
 
-(use-package powerline
-  :ensure t
-  :config
-  (powerline-default-theme)
-  (setq powerline-buffer-size-suffix  t)
-        powerline-default-separator   nil
-        powerline-display-buffer-size nil
-        powerline-display-hud         t
-        powerline-display-mule-info   t
-        powerline-gui-use-vcs-glyph   t)
-
 (use-package monokai-theme
   :ensure t
   :config (load-theme 'monokai t))
@@ -134,7 +137,7 @@
   :config
   (setq company-backends (delete 'company-clang company-backends))
   (global-company-mode)
-  :bind ("<backtab>" . company-complete-common))
+  :bind ("C-\\" . company-complete-common))
 
 (use-package flycheck
   :ensure t
@@ -214,21 +217,6 @@
   :disabled
   :ensure t)
 
-;; Non-C-Like Languages
-
-(use-package jedi
-  :disabled
-  :ensure t
-  :commands jedi:setup
-  :init (add-hook 'python-mode-hook 'jedi:setup)
-  :config (jedi:install-server))
-
-(use-package company-jedi
-  :disabled
-  :ensure t
-  :after jedi
-  :config (add-to-list 'company-backends 'company-jedi))
-
 ;; Plaintext Modes
 
 (use-package markdown-mode
@@ -283,17 +271,3 @@
 
 (provide 'init)
 ;;; init.el ends here
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   (quote
-    (company-web rainbow-mode web-mode less-css-mode yaml-mode json-mode markdown-mode autodisass-llvm-bitcode bison-mode clang-format flycheck-irony company-irony-c-headers company-irony irony flycheck company modern-cpp-font-lock cmake-mode gitignore-mode gitconfig-mode git-gutter rainbow-identifiers rainbow-delimiters monokai-theme powerline smooth-scrolling exec-path-from-shell use-package))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )

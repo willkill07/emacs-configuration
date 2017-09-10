@@ -40,9 +40,9 @@
 ;; GUI Interface
 (if window-system
     (progn
-      (menu-bar-mode -1)
-      (tool-bar-mode -1)
-      (scroll-bar-mode -1)))
+      (menu-bar-mode 1)
+      (tool-bar-mode 1)
+      (scroll-bar-mode 1)))
 
 ;; Modeline
 (diminish 'abbrev-mode)
@@ -160,15 +160,6 @@
       (define-key irony-mode-map [remap complete-symbol] 'irony-completion-at-point-async))
     (add-hook 'irony-mode-hook 'my-irony-mode-hook)
     (add-hook 'irony-mode-hook 'irony-cdb-autosetup-compile-options)
-    (if (not (irony--locate-server-executable))
-        (irony-install-server
-         (format
-          (concat "%s %s %s && %s --build . --use-stderr --config Release --target install")
-          (shell-quote-argument irony-cmake-executable)
-          (shell-quote-argument
-           (concat "-DCMAKE_INSTALL_PREFIX=" (expand-file-name irony-server-install-prefix)))
-          (shell-quote-argument irony-server-source-dir)
-          (shell-quote-argument irony-cmake-executable))))
 
     (add-hook 'c-mode-hook
               (lambda()
@@ -271,3 +262,17 @@
 
 (provide 'init)
 ;;; init.el ends here
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   (quote
+    (company-web rainbow-mode web-mode less-css-mode yaml-mode json-mode markdown-mode autodisass-llvm-bitcode llvm-mode bison-mode clang-format flycheck-irony company-irony-c-headers company-irony irony flycheck company modern-cpp-font-lock cmake-mode gitignore-mode gitconfig-mode git-gutter rainbow-identifiers rainbow-delimiters monokai-theme smooth-scrolling exec-path-from-shell use-package))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )

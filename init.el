@@ -2,20 +2,6 @@
 
 ;;; Commentary:
 
-;; Intelligent C++ autocomplete added to Emacs!
-;;
-;;  - Completion window can be prought up with C-\
-;;
-;;  - Code can be automatically formatted with clang-format (C-f)
-;;    The format guidelines can be changed on a per-project basis.
-;;    See: https://zed0.co.uk/clang-format-configurator/
-;;
-;;  - Warnings/errors/language standard can be changed by specifying a
-;;    .clang_complete file on a per-project or computer basis.
-;;    See: https://github.com/Rip-Rip/clang_complete
-;;
-;; Questions, comments or concerns? Contact Will Killian (willkill07)
-
 
 ;;; Code:
 
@@ -27,6 +13,7 @@
     (progn
       (package-refresh-contents)
       (package-install 'use-package)))
+
 (eval-when-compile
   (require 'use-package))
 
@@ -67,7 +54,12 @@
   (unless (derived-mode-p 'makefile-mode)
     (untabify (point-min) (point-max))))
 
-(add-hook 'before-save-hook 'delete-trailing-whitespace)
+(defun delete-trailing-except-markdown ()
+  "Remove trailing whitespace except for markdown."
+  (unless (derived-mode-p 'markdown-mode)
+    (delete-trailing-whitespace)))
+
+(add-hook 'before-save-hook 'delete-trailing-except-markdown)
 (add-hook 'before-save-hook 'untabify-except-makefiles)
 
 ;; Package loading
@@ -104,14 +96,7 @@
   (git-gutter:linum-setup)
   (global-git-gutter-mode))
 
-(use-package tramp
-  :config
-  (setq tramp-verbose        9
-        tramp-default-method "ssh"
-        tramp-ssh-controlmaster-options
-        (concat "-o ControlPath=/tmp/tramp.%%r@%%h:%%p "
-                "-o ControlMaster=auto "
-                "-o ControlPersist=no")))
+(use-package tramp)
 
 (use-package gitconfig-mode
   :ensure t
@@ -133,56 +118,31 @@
 (use-package company
   :ensure t
   :defer 2
-  :diminish company-mode "C "
-  :config
-  (setq company-backends (delete 'company-clang company-backends))
-  (global-company-mode)
+  :diminish company-mode "complete"
+  :config (global-company-mode)
   :bind ("C-\\" . company-complete-common))
 
 (use-package flycheck
   :ensure t
-  :diminish flycheck-mode "F "
+  :diminish flycheck-mode "syntax"
   :config
-  (global-flycheck-mode)
-  (setq-default flycheck-disabled-checkers '(c/c++-clang)))
+  (global-flycheck-mode))
 
-(use-package irony
+(use-package ycmd
   :ensure t
-  :after company
-  :diminish irony-mode "I "
-  :init
-  (add-hook 'c-mode-hook 'irony-mode)
-  (add-hook 'c++-mode-hook 'irony-mode)
+  :init (add-hook 'after-init-hook #'global-ycmd-mode)
   :config
-  (progn
-    (defun my-irony-mode-hook ()
-      (define-key irony-mode-map [remap completion-at-point] 'irony-completion-at-point-async)
-      (define-key irony-mode-map [remap complete-symbol] 'irony-completion-at-point-async))
-    (add-hook 'irony-mode-hook 'my-irony-mode-hook)
-    (add-hook 'irony-mode-hook 'irony-cdb-autosetup-compile-options)
+  (set-variable 'ycmd-global-config (file-truename "~/.emacs.d/ycmd.py"))
+  (set-variable 'ycmd-extra-conf-whitelist '("~/*"))
+  (set-variable 'ycmd-server-command `("python" ,(file-truename "~/.emacs.d/ycmd/ycmd/"))))
 
-    (add-hook 'c-mode-hook
-              (lambda()
-                (setq irony-additional-clang-options
-                      (quote ("-Wall" "-Wextra")))))
-    (add-hook 'c++-mode-hook
-              (lambda()
-                (setq irony-additional-clang-options
-                      (quote ("-std=c++14" "-Wall" "-Wextra" "-pedantic-errors")))))))
-
-(use-package company-irony
+(use-package company-ycmd
   :ensure t
-  :after company)
+  :init (company-ycmd-setup))
 
-(use-package company-irony-c-headers
+(use-package flycheck-ycmd
   :ensure t
-  :after company-irony
-  :config (add-to-list 'company-backends '(company-irony-c-headers company-irony)))
-
-(use-package flycheck-irony
-  :ensure t
-  :after flycheck
-  :config (add-hook 'flycheck-mode-hook 'flycheck-irony-setup))
+  :init (flycheck-ycmd-setup))
 
 (use-package clang-format
   :ensure t
@@ -267,9 +227,12 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(column-number-mode t)
+ '(font-use-system-font t)
  '(package-selected-packages
    (quote
-    (company-web rainbow-mode web-mode less-css-mode yaml-mode json-mode markdown-mode autodisass-llvm-bitcode llvm-mode bison-mode clang-format flycheck-irony company-irony-c-headers company-irony irony flycheck company modern-cpp-font-lock cmake-mode gitignore-mode gitconfig-mode git-gutter rainbow-identifiers rainbow-delimiters monokai-theme smooth-scrolling exec-path-from-shell use-package))))
+    (company-ycmd ycmd company-web rainbow-mode web-mode less-css-mode yaml-mode json-mode markdown-mode autodisass-llvm-bitcode llvm-mode bison-mode clang-format flycheck-irony company-irony-c-headers company-irony irony flycheck company modern-cpp-font-lock cmake-mode gitignore-mode gitconfig-mode git-gutter rainbow-identifiers rainbow-delimiters monokai-theme smooth-scrolling exec-path-from-shell use-package)))
+ '(show-paren-mode t))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
